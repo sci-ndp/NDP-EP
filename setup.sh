@@ -147,7 +147,7 @@ fi
 # ----------- JUPYTERHUB SETUP (before POP) ----------- #
 if [[ "$jhub" == "True" ]]; then
   echo "🔧 Setting up JupyterHub..."
-  git clone git@github.com:sci-ndp/jhub.git
+  git clone https://github.com/sci-ndp/jhub.git
   cd jhub
   cp .env.example .env
   sed -i "s|^JUPYTERHUB_ADMIN=.*|JUPYTERHUB_ADMIN=${poc}|" .env
