@@ -4,42 +4,97 @@ set -e
 # ----------- ARGUMENT PARSING ----------- #
 while [[ "$#" -gt 0 ]]; do
   case $1 in
-    --ckan_name) ckan_name="$2"; shift;;
-    --ckan_password) ckan_password="$2"; shift;;
-    --client_id) client_id="$2"; shift;;
-    --client_secret) client_secret="$2"; shift;;
-    --realm_name) realm_name="$2"; shift;;
-    --enable_staging) dxspaces="$2"; shift;;
-    --poc) poc="$2"; shift;;
-    --organization) organization="$2"; shift;;
-    --jhub) jhub="$2"; shift;;
-    --streaming) streaming="$2"; shift;;
-    --pre_ckan_url) pre_ckan_url="$2"; shift;;
-    --pre_ckan_key) pre_ckan_key="$2"; shift;;
+    --ckan_name)       ckan_name="$2"; shift;;
+    --ckan_password)   ckan_password="$2"; shift;;
+    --client_id)       client_id="$2"; shift;;
+    --client_secret)   client_secret="$2"; shift;;
+    --realm_name)      realm_name="$2"; shift;;
+    --enable_staging)  dxspaces="$2"; shift;;
+    --poc)             poc="$2"; shift;;
+    --organization)    organization="$2"; shift;;
+    --jhub)            jhub="$2"; shift;;
+    --streaming)       streaming="$2"; shift;;
+    --pre_ckan_url)    pre_ckan_url="$2"; shift;;
+    --pre_ckan_key)    pre_ckan_key="$2"; shift;;
     --keycloak_secret) keycloak_secret="$2"; shift;;
+    --config)          config_id="$2"; shift;;
     *) echo "Unknown parameter passed: $1"; exit 1;;
   esac
   shift
 done
 
-# ----------- VALIDATE REQUIRED FIELDS ----------- #
-required_vars=(ckan_name ckan_password client_id client_secret realm_name poc organization streaming pre_ckan_url pre_ckan_key keycloak_secret)
-for var in "${required_vars[@]}"; do
-  if [ -z "${!var}" ]; then
-    echo "Error: --$var is required"
+# ----------- INSTALL REQUIRED PACKAGES (including jq) ----------- #
+install_packages() {
+  for pkg in docker docker-compose git unzip python3 python3-venv jq; do
+    if ! command -v ${pkg%%-*} &> /dev/null; then
+      echo "Installing $pkg..."
+      sudo apt-get update
+      sudo apt-get install -y $pkg
+    fi
+  done
+}
+install_packages
+
+# ----------- FETCH CONFIG FROM API IF NEEDED ----------- #
+if [ -n "$config_id" ]; then
+  echo "⏳ Fetching configuration $config_id from federation API..."
+  # POST to federation server
+  tmpfile=$(mktemp)
+  http_status=$(curl -s -o "$tmpfile" -w "%{http_code}" \
+    -X POST https://federation.ndp.utah.edu/pop-config/search/ \
+    -H 'Content-Type: application/json' \
+    -d "{\"document_id\":\"${config_id}\"}")
+
+  if [ "$http_status" -ne 200 ]; then
+    echo "Error: Unable to connect to federation server or configuration not found (HTTP $http_status)"
+    cat "$tmpfile"
+    rm -f "$tmpfile"
     exit 1
   fi
-done
+
+  resp=$(cat "$tmpfile"); rm -f "$tmpfile"
+
+  # Ensure we got at least one document
+  count=$(echo "$resp" | jq 'length')
+  if [ "$count" -lt 1 ]; then
+    echo "Error: No configuration found for ID '$config_id'"
+    exit 1
+  fi
+
+  # Extract fields from the first matching document
+  ckan_password=$(echo "$resp" | jq -r '.[0].ckan_password')
+  client_id=$(echo "$resp" | jq -r '.[0].client_id')
+  client_secret=$(echo "$resp" | jq -r '.[0].client_secret')
+  realm_name=$(echo "$resp" | jq -r '.[0].realm_name')
+  dxspaces=$(echo "$resp" | jq -r '.[0].enable_staging')
+  poc=$(echo "$resp" | jq -r '.[0].poc')
+  organization=$(echo "$resp" | jq -r '.[0].organization')
+  jhub=$(echo "$resp" | jq -r '.[0].jhub')
+  streaming=$(echo "$resp" | jq -r '.[0].streaming')
+  pre_ckan_url=$(echo "$resp" | jq -r '.[0].pre_ckan_url')
+  pre_ckan_key=$(echo "$resp" | jq -r '.[0].pre_ckan_key')
+  keycloak_secret=$(echo "$resp" | jq -r '.[0].keycloak_secret')
+fi
+
+# ----------- VALIDATE REQUIRED FIELDS ----------- #
+if [ -z "$config_id" ]; then
+  required_vars=(ckan_name ckan_password client_id client_secret realm_name poc organization streaming pre_ckan_url pre_ckan_key keycloak_secret)
+  for var in "${required_vars[@]}"; do
+    if [ -z "${!var}" ]; then
+      echo "Error: --$var is required"
+      exit 1
+    fi
+  done
+fi
 
 # ----------- NORMALIZE BOOLEAN FLAGS ----------- #
-streaming=$(echo "$streaming" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
-dxspaces=$(echo "$dxspaces" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
-jhub=$(echo "$jhub" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
 for var in streaming dxspaces jhub; do
-  if [[ "${!var}" != "True" && "${!var}" != "False" ]]; then
+  val=$(echo "${!var}" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
+  if [[ "$val" != "True" && "$val" != "False" ]]; then
     echo "Error: --$var must be 'true' or 'false' (case-insensitive)"
     exit 1
   fi
+  declare $var="$val"
 done
 
 machine_ip=$(hostname -I | awk '{print $1}')
@@ -48,20 +103,20 @@ swagger_title="NDP POP REST API"
 
 # ----------- SAVE USER INFO ----------- #
 {
-echo "CKAN_SYSADMIN_NAME: $ckan_name"
-echo "CKAN_SYSADMIN_PASSWORD: $ckan_password"
-echo "Keycloak CLIENT_ID: $client_id"
-echo "Keycloak CLIENT_SECRET: $client_secret"
-echo "Keycloak Realm: $realm_name"
-echo "Keycloak Secret: $keycloak_secret"
-echo "Pre-CKAN URL: $pre_ckan_url"
-echo "Pre-CKAN API Key: $pre_ckan_key"
-echo "Enable Staging: $dxspaces"
-echo "Enable Streaming: $streaming"
-echo "POC: $poc"
-echo "Organization: $organization"
-echo "JupyterHub Enabled: $jhub"
-echo "Machine IP: $machine_ip"
+  echo "CKAN_SYSADMIN_NAME: $ckan_name"
+  echo "CKAN_SYSADMIN_PASSWORD: $ckan_password"
+  echo "Keycloak CLIENT_ID: $client_id"
+  echo "Keycloak CLIENT_SECRET: $client_secret"
+  echo "Keycloak Realm: $realm_name"
+  echo "Keycloak Secret: $keycloak_secret"
+  echo "Pre-CKAN URL: $pre_ckan_url"
+  echo "Pre-CKAN API Key: $pre_ckan_key"
+  echo "Enable Staging: $dxspaces"
+  echo "Enable Streaming: $streaming"
+  echo "POC: $poc"
+  echo "Organization: $organization"
+  echo "JupyterHub Enabled: $jhub"
+  echo "Machine IP: $machine_ip"
 } > "$info_file"
 
 # ----------- INSTALL REQUIRED PACKAGES ----------- #
