@@ -126,7 +126,7 @@ cd ckan
 cp .env.example .env
 sed -i "s/^CKAN_SYSADMIN_NAME=.*/CKAN_SYSADMIN_NAME=${ckan_name}/" .env
 sed -i "s/^CKAN_SYSADMIN_PASSWORD=.*/CKAN_SYSADMIN_PASSWORD=${ckan_password}/" .env
-sed -i "s|^CKAN_SITE_URL=.*|CKAN_SITE_URL=http://${machine_ip}:8443|" .env
+sed -i "s|^CKAN_SITE_URL=.*|CKAN_SITE_URL=https://${machine_ip}:8443|" .env
 $docker_compose_cmd up -d --build
 cd ..
 
@@ -145,17 +145,10 @@ while true; do
   sleep 5
 done
 
-ckan_ini_path="/srv/app/ckan.ini"
-if docker exec "$ckan_container" test -f "$ckan_ini_path"; then
-  docker exec "$ckan_container" sed -i "s/ckan.auth.create_user_via_web = true/ckan.auth.create_user_via_web = false/" "$ckan_ini_path"
-else
-  echo "❌ CKAN ini file not found."
-  exit 1
-fi
 
 api_key=$(docker exec "$ckan_container" ckan -c "$ckan_ini_path" user token add "$ckan_name" api_key_for_admin | tail -n 1 | tr -d '\r')
 docker restart "$ckan_container"
-echo "CKAN URL: http://${machine_ip}:8443" >> "$info_file"
+echo "CKAN URL: https://${machine_ip}:8443" >> "$info_file"
 echo "CKAN API Key: ${api_key}" >> "$info_file"
 
 if [[ "$dxspaces" == "True" ]]; then
@@ -194,7 +187,7 @@ update_env() {
 }
 
 update_env "CKAN_LOCAL_ENABLED" "True"
-update_env "CKAN_URL" "http://${machine_ip}:8443"
+update_env "CKAN_URL" "https://${machine_ip}:8443"
 update_env "CKAN_GLOBAL_URL" "https://nationaldataplatform.org/catalog"
 update_env "CKAN_API_KEY" "${api_key}"
 update_env "PRE_CKAN_ENABLED" "True"
