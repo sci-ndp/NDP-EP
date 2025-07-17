@@ -167,8 +167,18 @@ ckan_ini_path=$(docker exec "$ckan_container" bash -c '
 }
 
 # Generate admin API key
-api_key=$(docker exec "$ckan_container" bash -c "ckan -c '$ckan_ini_path' user token add '$ckan_name' api_key_for_admin" \
-  | awk '/^[A-Za-z0-9\-_]{32,}$/ { print; exit }')
+# Generate CKAN API token and extract it cleanly regardless of prefix formatting
+api_key=$(docker exec "$ckan_container" bash -c "
+  ckan -c '$ckan_ini_path' user token add '$ckan_name' api_key_for_admin
+" | tr -cd '\11\12\15\40-\176' | grep -Eo 'eyJ[0-9a-zA-Z._-]{30,}' | head -n 1)
+
+# Fallback check
+if [[ -z "$api_key" ]]; then
+  echo "❌ Failed to extract CKAN API key. Full output below:"
+  docker exec "$ckan_container" bash -c "ckan -c '$ckan_ini_path' user token add '$ckan_name' api_key_for_admin"
+  exit 1
+fi
+
 docker restart "$ckan_container"
 echo "CKAN URL: https://${machine_ip}:8443" >> "$info_file"
 echo "CKAN API Key: ${api_key}" >> "$info_file"
