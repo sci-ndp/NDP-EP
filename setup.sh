@@ -155,8 +155,21 @@ while true; do
   sleep 5
 done
 
-ckan_ini_path="/etc/ckan/default/ckan.ini"
-api_key=$(docker exec "$ckan_container" ckan -c "$ckan_ini_path" user token add "$ckan_name" api_key_for_admin | tail -n 1 | tr -d '\r')
+# Detect ckan.ini path inside container
+ckan_ini_path=$(docker exec "$ckan_container" bash -c '
+  for p in /srv/app/ckan.ini /etc/ckan/ckan.ini /etc/ckan/default/ckan.ini; do
+    if [ -f "$p" ]; then echo "$p"; exit 0; fi
+  done
+  exit 1
+') || {
+  echo "❌ Could not find ckan.ini inside container $ckan_container"
+  exit 1
+}
+
+# Generate admin API key
+api_key=$(docker exec "$ckan_container" bash -c "ckan -c '$ckan_ini_path' user token add '$ckan_name' api_key_for_admin" \
+  | awk '/[0-9a-fA-F-]{32,}/{print $NF}' | tail -n1)
+
 docker restart "$ckan_container"
 echo "CKAN URL: https://${machine_ip}:8443" >> "$info_file"
 echo "CKAN API Key: ${api_key}" >> "$info_file"
