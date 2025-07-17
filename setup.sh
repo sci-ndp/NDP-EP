@@ -168,8 +168,7 @@ ckan_ini_path=$(docker exec "$ckan_container" bash -c '
 
 # Generate admin API key
 api_key=$(docker exec "$ckan_container" bash -c "ckan -c '$ckan_ini_path' user token add '$ckan_name' api_key_for_admin" \
-  | awk '/[0-9a-fA-F-]{32,}/{print $NF}' | tail -n1)
-
+  | awk '/^[A-Za-z0-9\-_]{32,}$/ { print; exit }')
 docker restart "$ckan_container"
 echo "CKAN URL: https://${machine_ip}:8443" >> "$info_file"
 echo "CKAN API Key: ${api_key}" >> "$info_file"
