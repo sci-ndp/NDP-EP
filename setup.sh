@@ -1,58 +1,68 @@
-#!/bin/bash
+#!/bin/bas#!/bin/bash
 set -e
 cat <<'EOF'
 
 
-  ███╗   ██╗██████╗ ██████╗       ███████╗██████╗ 
+  ███╗   ██╗██████╗ ██████╗       ███████╗██████╗
   ████╗  ██║██╔══██╗██╔══██╗      ██╔════╝██╔══██╗
   ██╔██╗ ██║██║  ██║██████╔╝█████╗█████╗  ██████╔╝
-  ██║╚██╗██║██║  ██║██╔═══╝ ╚════╝██╔══╝  ██╔═══╝ 
-  ██║ ╚████║██████╔╝██║           ███████╗██║     
-  ╚═╝  ╚═══╝╚═════╝ ╚═╝           ╚══════╝╚═╝     
-                                                  
+  ██║╚██╗██║██║  ██║██╔═══╝ ╚════╝██╔══╝  ██╔═══╝
+  ██║ ╚████║██████╔╝██║           ███████╗██║
+  ╚═╝  ╚═══╝╚═════╝ ╚═╝           ╚══════╝╚═╝
+
 EOF
-# ----------- PARSE CONFIG ID ----------- #
+
+# ----------- PARSE ARGS ----------- #
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     --config_id) config_id="$2"; shift ;;
-    *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    --ckan_name) ckan_name="$2"; shift ;;
+    --ckan_password) ckan_password="$2"; shift ;;
+    --client_id) client_id="$2"; shift ;;
+    --client_secret) client_secret="$2"; shift ;;
+    --realm_name) realm_name="$2"; shift ;;
+    --keycloak_secret) keycloak_secret="$2"; shift ;;
+    --pre_ckan_url) pre_ckan_url="$2"; shift ;;
+    --pre_ckan_key) pre_ckan_key="$2"; shift ;;
+    --poc) poc="$2"; shift ;;
+    --organization) organization="$2"; shift ;;
+    --streaming) streaming="$2"; shift ;;
+    --enable_staging) dxspaces="$2"; shift ;;
+    --jhub) jhub="$2"; shift ;;
+    *) echo "❌ Unknown parameter passed: $1"; exit 1 ;;
   esac
   shift
 done
 
-if [[ -z "$config_id" ]]; then
-  echo "❌ --config_id is required"
-  exit 1
-fi
+# ----------- FETCH CONFIG IF NEEDED ----------- #
+if [[ -n "$config_id" ]]; then
+  echo "📡 Fetching configuration for ID: $config_id"
+  config_json=$(curl -s "https://federation.ndp.utah.edu/test/api/v1/pop/${config_id}")
+  if [[ -z "$config_json" || "$config_json" == "null" ]]; then
+    echo "❌ Failed to fetch config from Federation API."
+    exit 1
+  fi
 
-# ----------- FETCH CONFIG FROM FEDERATION API ----------- #
-echo "Fetching configuration for ID: $config_id"
-config_json=$(curl -s "https://federation.ndp.utah.edu/test/api/v1/pop/${config_id}")
-if [[ -z "$config_json" || "$config_json" == "null" ]]; then
-  echo "❌ Failed to fetch config from Federation API."
-  exit 1
+  [[ -z "$ckan_name" ]]         && ckan_name="admin"
+  [[ -z "$ckan_password" ]]     && ckan_password=$(jq -r '.ckan_password'       <<< "$config_json")
+  [[ -z "$client_id" ]]         && client_id=$(jq -r '.client_id'               <<< "$config_json")
+  [[ -z "$client_secret" ]]     && client_secret=$(jq -r '.client_secret'       <<< "$config_json")
+  [[ -z "$realm_name" ]]        && realm_name=$(jq -r '.realm_name'             <<< "$config_json")
+  [[ -z "$keycloak_secret" ]]   && keycloak_secret=$(jq -r '.keycloak_secret'   <<< "$config_json")
+  [[ -z "$pre_ckan_url" ]]      && pre_ckan_url=$(jq -r '.pre_ckan_url'         <<< "$config_json")
+  [[ -z "$pre_ckan_key" ]]      && pre_ckan_key=$(jq -r '.pre_ckan_key'         <<< "$config_json")
+  [[ -z "$poc" ]]               && poc=$(jq -r '.poc'                           <<< "$config_json")
+  [[ -z "$organization" ]]      && organization=$(jq -r '.organization'         <<< "$config_json")
+  [[ -z "$streaming" ]]         && streaming=$(jq -r '.streaming'               <<< "$config_json")
+  [[ -z "$dxspaces" ]]          && dxspaces=$(jq -r '.enable_staging'           <<< "$config_json")
+  [[ -z "$jhub" ]]              && jhub=$(jq -r '.jhub'                         <<< "$config_json")
 fi
-
-# ----------- EXTRACT VALUES ----------- #
-ckan_name="admin"
-ckan_password=$(jq -r '.ckan_password'       <<< "$config_json")
-client_id=$(jq -r '.client_id'               <<< "$config_json")
-client_secret=$(jq -r '.client_secret'       <<< "$config_json")
-realm_name=$(jq -r '.realm_name'             <<< "$config_json")
-keycloak_secret=$(jq -r '.keycloak_secret'   <<< "$config_json")
-pre_ckan_url=$(jq -r '.pre_ckan_url'         <<< "$config_json")
-pre_ckan_key=$(jq -r '.pre_ckan_key'         <<< "$config_json")
-poc=$(jq -r '.poc'                           <<< "$config_json")
-organization=$(jq -r '.organization'         <<< "$config_json")
-streaming=$(jq -r '.streaming'               <<< "$config_json")
-dxspaces=$(jq -r '.enable_staging'           <<< "$config_json")
-jhub=$(jq -r '.jhub'                         <<< "$config_json")
 
 # ----------- VALIDATE REQUIRED FIELDS ----------- #
 required_vars=(ckan_password client_id client_secret realm_name keycloak_secret pre_ckan_url pre_ckan_key poc organization streaming dxspaces jhub)
 for var in "${required_vars[@]}"; do
   if [ -z "${!var}" ]; then
-    echo "❌ --$var is required (and missing in config ID: $config_id)"
+    echo "❌ --$var is required"
     exit 1
   fi
 done
@@ -69,12 +79,12 @@ normalize_bool() {
     exit 1
   fi
 }
-
 streaming=$(normalize_bool "$streaming")
 dxspaces=$(normalize_bool "$dxspaces")
 jhub=$(normalize_bool "$jhub")
 
 # ----------- CONTINUE SETUP ----------- #
+ckan_name="${ckan_name:-admin}"
 machine_ip=$(hostname -I | awk '{print $1}')
 info_file="user_info.txt"
 swagger_title="NDP POP REST API"
@@ -145,7 +155,7 @@ while true; do
   sleep 5
 done
 
-
+ckan_ini_path="/etc/ckan/default/ckan.ini"
 api_key=$(docker exec "$ckan_container" ckan -c "$ckan_ini_path" user token add "$ckan_name" api_key_for_admin | tail -n 1 | tr -d '\r')
 docker restart "$ckan_container"
 echo "CKAN URL: https://${machine_ip}:8443" >> "$info_file"
@@ -217,4 +227,3 @@ $docker_compose_cmd up -d --build
 cd ..
 echo "✅ NDP stack deployed successfully!"
 cat "$info_file"
-
