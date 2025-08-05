@@ -37,7 +37,7 @@ done
 # ----------- FETCH CONFIG IF NEEDED ----------- #
 if [[ -n "$config_id" ]]; then
   echo "📡 Fetching configuration for ID: $config_id"
-  config_json=$(curl -s "https://federation.ndp.utah.edu/test/api/v1/pop/${config_id}")
+  config_json=$(curl -s "http://155.101.6.191:8877/pop/${config_id}")
   if [[ -z "$config_json" || "$config_json" == "null" ]]; then
     echo "❌ Failed to fetch config from Federation API."
     exit 1
