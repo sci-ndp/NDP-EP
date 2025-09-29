@@ -43,7 +43,7 @@ if [[ -n "$config_id" ]]; then
     exit 1
   fi
 
-  [[ -z "$ckan_name" ]]         && ckan_name="admin"
+  [[ -z "$ckan_name" ]]        && ckan_name=$(jq -r '.ckan_name // "admin"'     <<< "$config_json")
   [[ -z "$ckan_password" ]]     && ckan_password=$(jq -r '.ckan_password'       <<< "$config_json")
   [[ -z "$client_id" ]]         && client_id=$(jq -r '.client_id'               <<< "$config_json")
   [[ -z "$client_secret" ]]     && client_secret=$(jq -r '.client_secret'       <<< "$config_json")
