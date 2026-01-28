@@ -65,6 +65,16 @@ kcat -b 192.0.2.10:9092 \
 - Expected result: broker list output similar to `Metadata for all topics...`; it will fail without the correct SASL username/password or if you target the SSL port without TLS flags.
 - Kafka UI (`http://localhost:8080`) is bound to loopback for safety; reach it from the host or via SSH tunnel.
 
+## SSL/TLS and certificates
+- **Important**: This setup uses self-signed certificates for CKAN (port 8443) and other HTTPS endpoints. These are suitable for development and testing but **not recommended for production**.
+- To use real certificates in production:
+  - Obtain valid certs from a trusted CA (e.g., Let's Encrypt).
+  - Update the CKAN `.env` to point to your certificate files in `full-stack/ckan/.env`.
+  - Update any JupyterHub TLS configuration if those services are exposed externally.
+  - For Kafka SSL (port 9094), replace the self-signed certs in `full-stack/kafka/certs/` with your signed certs.
+  - Clients must either trust your CA or skip verification (not recommended for production).
+- See the individual service READMEs in `full-stack/*/` for service-specific certificate configuration details.
+
 ## Notes and caveats
 - The script may run `sudo apt-get install` and the Docker convenience script if Docker is absent.
 - JupyterHub Keycloak URLs are derived from `idp_host` and `realm_name` in the federation config; callback and logout URLs use the detected host IP on port 8002.
