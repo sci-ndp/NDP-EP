@@ -31,6 +31,25 @@ print_info()    { echo -e "${YELLOW}[INFO]${NC} $1"; }
 print_error()   { echo -e "${RED}[ERROR]${NC} $1"; }
 print_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 
+print_banner() {
+  echo -e "${CYAN}"
+  cat <<'EOF'
+
+  ███╗   ██╗██████╗ ██████╗       ███████╗██████╗
+  ████╗  ██║██╔══██╗██╔══██╗      ██╔════╝██╔══██╗
+  ██╔██╗ ██║██║  ██║██████╔╝█████╗█████╗  ██████╔╝
+  ██║╚██╗██║██║  ██║██╔═══╝ ╚════╝██╔══╝  ██╔═══╝
+  ██║ ╚████║██████╔╝██║           ███████╗██║
+  ╚═╝  ╚═══╝╚═════╝ ╚═╝           ╚══════╝╚═╝
+
+        NDP Endpoint API - Setup Script
+
+EOF
+  echo -e "${NC}"
+}
+
+print_banner
+
 show_usage() {
   cat <<EOF
 Usage:
