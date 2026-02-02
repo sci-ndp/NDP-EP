@@ -5,10 +5,11 @@ set -euo pipefail
 # NDP-EP Setup Script (Federation -> Kafka -> CKAN)
 # ==============================================
 # Resolve a real directory even when run via process substitution (/dev/fd/*)
-if [[ "${BASH_SOURCE[0]}" == /dev/fd/* || "${BASH_SOURCE[0]}" == /proc/self/fd/* ]]; then
+SCRIPT_PATH="${BASH_SOURCE[0]-$0}"
+if [[ -z "${SCRIPT_PATH}" || "${SCRIPT_PATH}" == /dev/fd/* || "${SCRIPT_PATH}" == /proc/self/fd/* ]]; then
   SCRIPT_DIR="$PWD"
 else
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  SCRIPT_DIR="$(cd "$(dirname "${SCRIPT_PATH}")" && pwd)"
 fi
 # ---------- Colors ----------
 RED='\033[0;31m'
