@@ -240,7 +240,7 @@ print_success "All dependencies satisfied"
 # =====================================================
 # STEP 2.5 — Script paths + persistent user info (REQUIRED)
 # =====================================================
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# SCRIPT_DIR was resolved safely at the top (process substitution safe).
 STACK_ROOT="${SCRIPT_DIR}/full-stack"
 USER_INFO_FILE="${SCRIPT_DIR}/user_info.env"
 info_file="${SCRIPT_DIR}/setup_info.txt"
