@@ -687,7 +687,7 @@ if [[ "${jhub}" == "true" || "${jhub}" == "True" ]]; then
       WORKSPACE_API_URL="https://ndp-test.sdsc.edu/workspaces-api"
     else
       CKAN_API_URL="https://nationaldataplatform.org/catalog/api/3/action/"
-      WORKSPACE_API_URL="https://nationaldataplatform.com/workspaces-api"
+      WORKSPACE_API_URL="https://nationaldataplatform.org/workspaces-api"
     fi
 
     # Apply replacements
