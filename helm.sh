@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy scidx-helm.
+# Deploy ndp-ep-helm.
 #
 # Fetches the federation document before calling helm so that optional
 # sub-charts (kafka-kraft, ndp-jupyterhub) can be enabled/disabled based
@@ -15,7 +15,7 @@ CLUSTER_HOST=""
 STORAGE_CLASS=""
 INGRESS_CLASS=""
 NDP_ENV="prod"
-NAMESPACE="scidx"
+NAMESPACE="ndp-ep"
 
 # --------------------------------------------------------------------------
 # Parse flags
