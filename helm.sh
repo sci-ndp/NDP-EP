@@ -88,7 +88,7 @@ helm repo update
 # --------------------------------------------------------------------------
 # Deploy
 # --------------------------------------------------------------------------
-helm upgrade --install scidx ndp-ep/ndp-ep-helm \
+helm upgrade --install ndp-ep ndp-ep/ndp-ep-helm \
   -n "${NAMESPACE}" --create-namespace \
   --set global.env="${NDP_ENV}" \
   --set federation.configId="${CONFIG_ID}" \
