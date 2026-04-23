@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy scidx-helm.
+# Deploy ndp-ep-helm.
 #
 # Fetches the federation document before calling helm so that optional
 # sub-charts (kafka-kraft, ndp-jupyterhub) can be enabled/disabled based
@@ -15,7 +15,7 @@ CLUSTER_HOST=""
 STORAGE_CLASS=""
 INGRESS_CLASS=""
 NDP_ENV="prod"
-NAMESPACE="scidx"
+NAMESPACE="ndp-ep"
 
 # --------------------------------------------------------------------------
 # Parse flags
@@ -82,13 +82,13 @@ echo "==> jupyterhub=${JHUB}   -> ndp-jupyterhub.enabled=${JHUB_ENABLED}"
 # --------------------------------------------------------------------------
 # Add/update Helm repo
 # --------------------------------------------------------------------------
-helm repo add scidx-helm https://sci-ndp.github.io/scidx-helm
+helm repo add ndp-ep https://sci-ndp.github.io/ndp-ep-helm
 helm repo update
 
 # --------------------------------------------------------------------------
 # Deploy
 # --------------------------------------------------------------------------
-helm upgrade --install scidx scidx-helm/scidx-helm \
+helm upgrade --install ndp-ep ndp-ep/ndp-ep-helm \
   -n "${NAMESPACE}" --create-namespace \
   --set global.env="${NDP_ENV}" \
   --set federation.configId="${CONFIG_ID}" \
