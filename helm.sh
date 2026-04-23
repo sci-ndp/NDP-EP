@@ -82,13 +82,13 @@ echo "==> jupyterhub=${JHUB}   -> ndp-jupyterhub.enabled=${JHUB_ENABLED}"
 # --------------------------------------------------------------------------
 # Add/update Helm repo
 # --------------------------------------------------------------------------
-helm repo add scidx-helm https://sci-ndp.github.io/scidx-helm
+helm repo add ndp-ep https://sci-ndp.github.io/ndp-ep-helm
 helm repo update
 
 # --------------------------------------------------------------------------
 # Deploy
 # --------------------------------------------------------------------------
-helm upgrade --install scidx scidx-helm/scidx-helm \
+helm upgrade --install scidx ndp-ep/ndp-ep-helm \
   -n "${NAMESPACE}" --create-namespace \
   --set global.env="${NDP_ENV}" \
   --set federation.configId="${CONFIG_ID}" \
