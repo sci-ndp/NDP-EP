@@ -24,7 +24,7 @@
 #  --------------------------------------------------------------------------
 set -euo pipefail
 
-EP_VERSION="v0.34.30"
+EP_VERSION="v0.34.31"
 INSTALLER="https://raw.githubusercontent.com/national-data-platform/ep-api/${EP_VERSION}/install/install.sh"
 
 # The installer needs the rest of the repository beside it -- example.env
