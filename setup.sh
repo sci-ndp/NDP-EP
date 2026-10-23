@@ -24,8 +24,12 @@
 #  --------------------------------------------------------------------------
 set -euo pipefail
 
-EP_VERSION="v0.34.58"
-INSTALLER="https://raw.githubusercontent.com/national-data-platform/ep-api/${EP_VERSION}/install/install.sh"
+EP_VERSION="v0.34.64"
+# The installer and its checksum as that release publishes them (ep-api
+# v0.34.64 and later, national-data-platform/ep-api#373). The installer is run
+# only if it matches.
+RELEASE="https://github.com/national-data-platform/ep-api/releases/download/${EP_VERSION}"
+INSTALLER="${RELEASE}/install.sh"
 
 # The installer needs the rest of the repository beside it -- example.env
 # above all -- and clones it when run from a downloaded file like this one.
@@ -34,23 +38,26 @@ INSTALLER="https://raw.githubusercontent.com/national-data-platform/ep-api/${EP_
 # one that actually ran would be the branch tip.
 export EP_REPO_REF="$EP_VERSION"
 
-tmp="$(mktemp)"
-trap 'rm -f "$tmp"' EXIT
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
 
 # Downloaded to a file rather than piped straight into bash: with process
 # substitution a failed download is an empty script, which bash runs happily
 # and exits 0 from, so a network problem would look like a silent success.
-if ! curl -fsSL "$INSTALLER" -o "$tmp"; then
-  echo "Could not download the NDP Endpoint installer from:" >&2
-  echo "  $INSTALLER" >&2
+if ! curl -fsSL "$INSTALLER" -o "$work/install.sh" \
+   || ! curl -fsSL "${RELEASE}/SHA256SUMS" -o "$work/SHA256SUMS"; then
+  echo "Could not download the NDP Endpoint installer and its checksum from:" >&2
+  echo "  $RELEASE" >&2
   exit 1
 fi
 
-if [[ ! -s "$tmp" ]]; then
-  echo "The installer downloaded from $INSTALLER is empty." >&2
+# The same file every time for this version, or nothing runs.
+if ! (cd "$work" && sha256sum -c --status SHA256SUMS); then
+  echo "The installer downloaded from $INSTALLER does not match its SHA256SUMS;" >&2
+  echo "not running it." >&2
   exit 1
 fi
 
 status=0
-bash "$tmp" "$@" || status=$?
+bash "$work/install.sh" "$@" || status=$?
 exit "$status"
