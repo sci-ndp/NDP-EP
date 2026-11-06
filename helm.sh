@@ -24,14 +24,14 @@ RELEASE_NAME=""
 # --------------------------------------------------------------------------
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --config-id)      CONFIG_ID="$2";             shift 2 ;;
-    --host)           CLUSTER_HOST="$2";          shift 2 ;;
-    --public-host)    CLUSTER_PUBLIC_HOST="$2";   shift 2 ;;
-    --storage-class)  STORAGE_CLASS="$2";         shift 2 ;;
-    --ingress-class)  INGRESS_CLASS="$2";         shift 2 ;;
-    --env)            NDP_ENV="$2";               shift 2 ;;
-    --namespace)      NAMESPACE="$2";             shift 2 ;;
-    --release-name)   RELEASE_NAME="$2";          shift 2 ;;
+    --config-id|--config_id)  CONFIG_ID="$2";             shift 2 ;;
+    --host)                   CLUSTER_HOST="$2";          shift 2 ;;
+    --public-host)            CLUSTER_PUBLIC_HOST="$2";   shift 2 ;;
+    --storage-class)          STORAGE_CLASS="$2";         shift 2 ;;
+    --ingress-class)          INGRESS_CLASS="$2";         shift 2 ;;
+    --env)                    NDP_ENV="$2";               shift 2 ;;
+    --namespace)              NAMESPACE="$2";             shift 2 ;;
+    --release-name)           RELEASE_NAME="$2";          shift 2 ;;
     *) echo "Unknown flag: $1"; exit 1 ;;
   esac
 done
