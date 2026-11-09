@@ -32,6 +32,13 @@ If `group_name` is present (e.g., `ndp_ep/ep-123`), JupyterHub is configured wit
 - Use `--env prod` for production federation lookup.
 - You can override the federation API base with `--federation_url https://custom.example.com`.
 
+### Choosing the ep-api version
+`setup.sh` installs the ep-api release named by `EP_VERSION` near its top. Each ep-api release opens a pull request here that raises it; merging that pull request is what makes new installations use the release. To install another release without changing the file, set the variable:
+```bash
+EP_VERSION=v0.34.72 ./setup.sh --config-id YOUR_CONFIG_ID
+```
+The release must publish `install.sh` and `SHA256SUMS` (ep-api v0.34.64 and later).
+
 ### Idempotency and re-runs
 - Kafka/CKAN/JupyterHub/EP API steps skip work if the service is already running and required keys are present.
 - Secrets are retained in `full-stack/*/.env` files; public endpoints and summaries are in `user_info.env` and `setup_info.txt`.

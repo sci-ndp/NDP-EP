@@ -21,10 +21,18 @@
 #  between to catch a mistake. Raise EP_VERSION when a release is ready to be
 #  installed from; the tags are at
 #  https://github.com/national-data-platform/ep-api/releases
+#
+#  Each ep-api release opens a pull request here raising the default below
+#  (issue #16), so a release reaches new installations when that pull request
+#  is merged, and is held back while it is not. Keep the line in this exact
+#  form: that pull request rewrites it.
+#
+#  Another release can be installed without changing this file:
+#    EP_VERSION=v0.34.72 bash setup.sh ...
 #  --------------------------------------------------------------------------
 set -euo pipefail
 
-EP_VERSION="v0.34.73"
+EP_VERSION="${EP_VERSION:-v0.34.73}"
 # The installer and its checksum as that release publishes them (ep-api
 # v0.34.64 and later, national-data-platform/ep-api#373). The installer is run
 # only if it matches.
