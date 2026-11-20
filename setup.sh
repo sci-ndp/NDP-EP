@@ -32,7 +32,7 @@
 #  --------------------------------------------------------------------------
 set -euo pipefail
 
-EP_VERSION="${EP_VERSION:-v1.0.2}"
+EP_VERSION="${EP_VERSION:-v1.1.0}"
 # The installer and its checksum as that release publishes them (ep-api
 # v0.34.64 and later, national-data-platform/ep-api#373). The installer is run
 # only if it matches.
